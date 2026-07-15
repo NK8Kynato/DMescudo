@@ -382,7 +382,7 @@ const App = () => {
 
     return (
       <div className="flex flex-col h-full w-full">
-        <div className="flex overflow-x-auto bg-stone-900 rounded-t-lg border-b border-stone-700 p-1 gap-1 custom-scrollbar">
+        <div className="flex overflow-x-auto bg-blue-900 rounded-t-lg border-b border-stone-700 p-1 gap-1 custom-scrollbar">
           {widget.pages.map((page) => (
             <div
               key={page.id}
