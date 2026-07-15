@@ -5,7 +5,7 @@ import {
   Heading, List, FilePlus, PlusSquare, X,
   GripHorizontal, MinusSquare, Scaling,
   Save, FolderOpen, Check, Lock, KeyRound,
-  Search, ImagePlus, RefreshCw
+  Search, ImagePlus, RefreshCw, Download, Upload
 } from 'lucide-react';
 
 const WidgetCard = ({ widget, updateWidget, removeWidget, bringToFront, children }) => {
@@ -240,6 +240,35 @@ const App = () => {
       setTimeout(() => setModalMessage({ type: '', text: '' }), 3000);
     }
     setAuthPrompt({ isOpen: false, templateId: null, action: null });
+  };
+
+  const exportTemplate = (template) => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(template));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `${template.name.replace(/\s+/g, '_')}_dm_layout.json`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
+
+  const importTemplate = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const imported = JSON.parse(e.target.result);
+        const newTemplates = [...templates, { ...imported, id: Date.now() }];
+        localStorage.setItem('dmscreen_templates', JSON.stringify(newTemplates));
+        setTemplates(newTemplates);
+        setModalMessage({ type: 'success', text: 'Modelo importado com sucesso!' });
+        setTimeout(() => setModalMessage({ type: '', text: '' }), 3000);
+      } catch (err) {
+        setModalMessage({ type: 'error', text: 'Arquivo inválido.' });
+      }
+    };
+    reader.readAsText(file);
   };
 
   const handleAuthSubmit = () => {
@@ -525,7 +554,13 @@ const App = () => {
           <div className="bg-stone-900 border border-stone-600 rounded-lg shadow-2xl w-full max-w-md flex flex-col overflow-hidden">
             <div className="flex justify-between items-center p-4 border-b border-stone-700 bg-stone-950">
               <h2 className="text-lg font-bold text-amber-500 flex items-center gap-2"><Save size={20} /> Modelos de Escudo</h2>
-              <button onClick={() => setShowTemplateModal(false)} className="text-stone-400 hover:text-red-400 transition-colors"><X size={20} /></button>
+              <div className="flex gap-2">
+                <label className="cursor-pointer bg-stone-800 hover:bg-stone-700 text-stone-300 p-2 rounded transition-colors" title="Importar Layout">
+                  <Upload size={18} />
+                  <input type="file" accept=".json" onChange={importTemplate} className="hidden" />
+                </label>
+                <button onClick={() => setShowTemplateModal(false)} className="text-stone-400 hover:text-red-400 transition-colors"><X size={20} /></button>
+              </div>
             </div>
             
             <div className="p-5 flex flex-col gap-6">
@@ -610,6 +645,13 @@ const App = () => {
                           </div>
                         </div>
                         <div className="flex gap-1 flex-shrink-0">
+                          <button 
+                            onClick={() => exportTemplate(t)}
+                            className="p-1.5 text-stone-500 hover:text-emerald-400 hover:bg-stone-700 rounded transition-colors"
+                            title="Exportar arquivo (Backup)"
+                          >
+                            <Download size={16} />
+                          </button>
                           <button 
                             onClick={() => requestTemplateAction(t.id, 'load')}
                             className="px-2 py-1.5 bg-stone-700 hover:bg-amber-600 hover:text-stone-900 text-stone-200 rounded text-xs font-bold transition-colors"
