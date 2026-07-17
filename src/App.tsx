@@ -11,6 +11,40 @@ import {
   Link2, ArrowUp, ArrowDown, ExternalLink, Minus, Type
 } from 'lucide-react';
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error("Erro Crítico no DM Screen:", error, errorInfo);
+  }
+  resetData = () => {
+    localStorage.removeItem('dmscreen_layout');
+    window.location.reload();
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="fixed inset-0 flex flex-col items-center justify-center bg-stone-950 text-stone-200 p-6 z-[9999]">
+          <div className="bg-stone-900 p-6 rounded-lg border border-red-500 max-w-md text-center shadow-2xl">
+            <h1 className="text-xl font-bold text-red-500 mb-4">Opa! A Tela do Mestre travou.</h1>
+            <p className="text-sm text-stone-400 mb-4">Esse erro de tela preta acontece quando os dados do seu cache antigo entram em conflito com a nova versão do aplicativo.</p>
+            <button onClick={this.resetData} className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded font-bold text-white transition-colors">
+              Limpar Cache e Restaurar
+            </button>
+            <p className="text-xs text-stone-500 mt-4">Nota: Isso limpa apenas a mesa atual. Seus "Modelos Salvos" estão seguros e não serão perdidos.</p>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const THEMES = {
   amber: { main: '#d97706', bg: '#1c1917', text: '#fef3c7' },
   emerald: { main: '#059669', bg: '#064e3b', text: '#d1fae5' },
@@ -121,6 +155,7 @@ const WidgetCard = ({ widget, updateWidget, removeWidget, bringToFront, isMobile
       >
         <div className="flex items-center gap-2 w-full overflow-hidden">
           {!widget.isLocked && <GripHorizontal size={isMobileMode ? 18 : 14} className="text-stone-500 flex-shrink-0" />}
+          {/* Bloqueamos a propagação do clique no input para permitir a digitação sem arrastar a janela */}
           <input 
             type="text" 
             value={widget.title || ''}
@@ -160,7 +195,7 @@ const WidgetCard = ({ widget, updateWidget, removeWidget, bringToFront, isMobile
 };
 
 const InitiativeWidget = ({ widget, updateWidget, isMobileMode }) => {
-  const combatants = widget.combatants || [];
+  const combatants = Array.isArray(widget.combatants) ? widget.combatants : [];
 
   const addCombatant = () => {
     const newCombatant = { id: Date.now() + Math.random(), name: 'Personagem', init: '', hp: '' };
@@ -224,7 +259,7 @@ const InitiativeWidget = ({ widget, updateWidget, isMobileMode }) => {
 const LinksWidget = ({ widget, updateWidget, isMobileMode }) => {
   const [urlInput, setUrlInput] = useState('');
   const [titleInput, setTitleInput] = useState('');
-  const links = widget.links || [];
+  const links = Array.isArray(widget.links) ? widget.links : [];
 
   const addLink = () => {
     if (!urlInput.trim()) return;
@@ -300,10 +335,9 @@ const TableWidget = ({ widget, updateWidget }) => {
   const [showToolbar, setShowToolbar] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
-  // Safe defaults if missing
-  const rows = widget.rows || [['', ''], ['', '']];
-  const colWidths = widget.colWidths || Array(rows[0].length).fill(120);
-  const rowHeights = widget.rowHeights || Array(rows.length).fill(40);
+  const rows = Array.isArray(widget.rows) ? widget.rows : [['', ''], ['', '']];
+  const colWidths = Array.isArray(widget.colWidths) ? widget.colWidths : Array(rows[0]?.length || 2).fill(120);
+  const rowHeights = Array.isArray(widget.rowHeights) ? widget.rowHeights : Array(rows.length).fill(40);
 
   const updateCell = (rIdx, cIdx, html) => {
     const newRows = [...rows];
@@ -441,8 +475,7 @@ const TableWidget = ({ widget, updateWidget }) => {
 
 const NoteWidget = ({ widget, updateWidget }) => {
   const [showToolbar, setShowToolbar] = useState(false);
-  // Security fallback if pages array doesn't exist in older saves
-  const pages = widget.pages || [{ id: Date.now() + Math.random(), title: 'Pág 1', content: '' }];
+  const pages = Array.isArray(widget.pages) && widget.pages.length > 0 ? widget.pages : [{ id: Date.now() + Math.random(), title: 'Pág 1', content: '' }];
   const activePage = pages.find(p => p.id === widget.activePageId) || pages[0];
   
   const addPage = () => {
@@ -610,7 +643,7 @@ const App = () => {
     window.addEventListener('resize', checkMobile);
     checkMobile();
     return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  }, []); // Safe dependency array
 
   const updateWidget = (id, updates) => setWidgets(prev => prev.map(w => w.id === id ? { ...w, ...updates } : w));
   const bringToFront = (id) => { const newZ = topZ + 1; setTopZ(newZ); updateWidget(id, { zIndex: newZ }); };
@@ -1014,4 +1047,10 @@ const App = () => {
   );
 };
 
-export default App;
+export default function AppWrapper() {
+  return (
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  );
+}
