@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Plus, Trash2, Dices, Layout, Image as ImageIcon, 
   Table as TableIcon, FileText, Bold, Italic, 
-  Heading, List, FilePlus, PlusSquare, X,
-  GripHorizontal, MinusSquare, Scaling,
-  Save, FolderOpen, Check, Lock, KeyRound,
+  Heading, FilePlus, PlusSquare, X,
+  GripHorizontal, Scaling,
+  Save, FolderOpen, Lock, KeyRound,
   Search, ImagePlus, RefreshCw, Download, Upload,
-  Unlock, Settings, Smartphone, Palette, MonitorPlay, MousePointer2,
-  Swords, Music, ChevronLeft, ChevronRight, Video,
+  Unlock, Settings, Smartphone, Palette,
+  Swords, ChevronLeft, ChevronRight,
   Link2, ArrowUp, ArrowDown, ExternalLink, Minus, Type
 } from 'lucide-react';
 
@@ -27,14 +27,14 @@ const WidgetCard = ({ widget, updateWidget, removeWidget, bringToFront, isMobile
     e.preventDefault();
     bringToFront(widget.id);
     
-    const startX = e.clientX || (e.touches && e.touches[0].clientX);
-    const startY = e.clientY || (e.touches && e.touches[0].clientY);
+    const startX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+    const startY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
     const startPosX = widget.x || 0;
     const startPosY = widget.y || 0;
 
     const onMove = (moveEvent) => {
-      const clientX = moveEvent.clientX || (moveEvent.touches && moveEvent.touches[0].clientX);
-      const clientY = moveEvent.clientY || (moveEvent.touches && moveEvent.touches[0].clientY);
+      const clientX = moveEvent.clientX || (moveEvent.touches && moveEvent.touches[0].clientX) || 0;
+      const clientY = moveEvent.clientY || (moveEvent.touches && moveEvent.touches[0].clientY) || 0;
       
       const dx = clientX - startX;
       const dy = clientY - startY;
@@ -70,14 +70,14 @@ const WidgetCard = ({ widget, updateWidget, removeWidget, bringToFront, isMobile
     e.stopPropagation();
     bringToFront(widget.id);
 
-    const startX = e.clientX || (e.touches && e.touches[0].clientX);
-    const startY = e.clientY || (e.touches && e.touches[0].clientY);
+    const startX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+    const startY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
     const startW = widget.width || 300;
     const startH = widget.height || 300;
 
     const onMove = (moveEvent) => {
-      const clientX = moveEvent.clientX || (moveEvent.touches && moveEvent.touches[0].clientX);
-      const clientY = moveEvent.clientY || (moveEvent.touches && moveEvent.touches[0].clientY);
+      const clientX = moveEvent.clientX || (moveEvent.touches && moveEvent.touches[0].clientX) || 0;
+      const clientY = moveEvent.clientY || (moveEvent.touches && moveEvent.touches[0].clientY) || 0;
       const dw = clientX - startX;
       const dh = clientY - startY;
       
@@ -123,7 +123,7 @@ const WidgetCard = ({ widget, updateWidget, removeWidget, bringToFront, isMobile
           {!widget.isLocked && <GripHorizontal size={isMobileMode ? 18 : 14} className="text-stone-500 flex-shrink-0" />}
           <input 
             type="text" 
-            value={widget.title}
+            value={widget.title || ''}
             onPointerDown={(e) => e.stopPropagation()}
             onChange={(e) => updateWidget(widget.id, { title: e.target.value })}
             className={`font-bold theme-text bg-transparent outline-none w-full px-1 truncate ${isMobileMode ? 'text-base' : 'text-sm'}`}
@@ -157,28 +157,26 @@ const WidgetCard = ({ widget, updateWidget, removeWidget, bringToFront, isMobile
 };
 
 const InitiativeWidget = ({ widget, updateWidget, isMobileMode }) => {
+  const combatants = widget.combatants || [];
+
   const addCombatant = () => {
-    const newCombatant = { id: Date.now(), name: 'Personagem', init: '', hp: '' };
-    updateWidget(widget.id, { combatants: [...(widget.combatants || []), newCombatant] });
+    const newCombatant = { id: Date.now() + Math.random(), name: 'Personagem', init: '', hp: '' };
+    updateWidget(widget.id, { combatants: [...combatants, newCombatant] });
   };
 
   const updateCombatant = (id, field, value) => {
-    const newCombatants = (widget.combatants || []).map(c => 
-      c.id === id ? { ...c, [field]: value } : c
-    );
+    const newCombatants = combatants.map(c => c.id === id ? { ...c, [field]: value } : c);
     updateWidget(widget.id, { combatants: newCombatants });
   };
 
   const removeCombatant = (id) => {
-    updateWidget(widget.id, { combatants: (widget.combatants || []).filter(c => c.id !== id) });
+    updateWidget(widget.id, { combatants: combatants.filter(c => c.id !== id) });
   };
 
   const sortInitiative = () => {
-    const sorted = [...(widget.combatants || [])].sort((a, b) => (Number(b.init) || 0) - (Number(a.init) || 0));
+    const sorted = [...combatants].sort((a, b) => (Number(b.init) || 0) - (Number(a.init) || 0));
     updateWidget(widget.id, { combatants: sorted });
   };
-
-  const combatants = widget.combatants || [];
 
   return (
     <div className="flex flex-col h-full w-full">
@@ -228,7 +226,7 @@ const LinksWidget = ({ widget, updateWidget, isMobileMode }) => {
   const addLink = () => {
     if (!urlInput.trim()) return;
     const newLink = { 
-      id: Date.now(), 
+      id: Date.now() + Math.random(), 
       title: titleInput.trim() || 'Novo Link', 
       url: urlInput.startsWith('http') ? urlInput : `https://${urlInput}` 
     };
@@ -237,9 +235,7 @@ const LinksWidget = ({ widget, updateWidget, isMobileMode }) => {
     setTitleInput('');
   };
 
-  const removeLink = (id) => {
-    updateWidget(widget.id, { links: links.filter(l => l.id !== id) });
-  };
+  const removeLink = (id) => updateWidget(widget.id, { links: links.filter(l => l.id !== id) });
 
   const moveLink = (index, dir) => {
     const newLinks = [...links];
@@ -249,35 +245,6 @@ const LinksWidget = ({ widget, updateWidget, isMobileMode }) => {
       [newLinks[index + 1], newLinks[index]] = [newLinks[index], newLinks[index + 1]];
     }
     updateWidget(widget.id, { links: newLinks });
-  };
-
-  const exportLinks = () => {
-    if (links.length === 0) return alert("A lista está vazia!");
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(links));
-    const downloadNode = document.createElement('a');
-    downloadNode.setAttribute("href", dataStr);
-    downloadNode.setAttribute("download", `dm_links.json`);
-    document.body.appendChild(downloadNode);
-    downloadNode.click();
-    downloadNode.remove();
-  };
-
-  const importLinks = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const imported = JSON.parse(event.target.result);
-        if (Array.isArray(imported)) {
-          const newLinks = imported.map(l => ({ ...l, id: Date.now() + Math.random() }));
-          updateWidget(widget.id, { links: [...links, ...newLinks] });
-        }
-      } catch (err) {
-        alert('Arquivo inválido.');
-      }
-    };
-    reader.readAsText(file);
   };
 
   return (
@@ -300,25 +267,11 @@ const LinksWidget = ({ widget, updateWidget, isMobileMode }) => {
           </button>
         </div>
       </div>
-
-      <div className="flex justify-between items-center px-1">
-        <span className="text-[10px] font-bold text-stone-500 uppercase">Lista ({links.length})</span>
-        <div className="flex gap-2">
-          <label className="text-[10px] text-stone-400 hover:theme-text cursor-pointer flex items-center gap-1 transition-colors">
-            <Upload size={10}/> Importar
-            <input type="file" accept=".json" onChange={importLinks} className="hidden" />
-          </label>
-          <button onClick={exportLinks} className="text-[10px] text-stone-400 hover:theme-text flex items-center gap-1 transition-colors">
-            <Download size={10}/> Exportar
-          </button>
-        </div>
-      </div>
-
       <div className="flex-1 overflow-y-auto custom-scrollbar bg-stone-950 rounded border border-stone-700 p-1 flex flex-col gap-1">
         {links.map((link, index) => (
           <div key={link.id} className="flex items-center justify-between p-2 rounded bg-stone-900 border border-stone-800 hover:border-stone-600 group transition-colors">
             <div className="flex items-center gap-2 flex-1 overflow-hidden">
-              <a href={link.url} target="_blank" rel="noreferrer" className="text-stone-400 hover:theme-text transition-colors flex-shrink-0" title="Abrir em Nova Guia">
+              <a href={link.url} target="_blank" rel="noreferrer" className="text-stone-400 hover:theme-text transition-colors flex-shrink-0">
                 <ExternalLink size={14} />
               </a>
               <div className="flex flex-col truncate">
@@ -335,9 +288,6 @@ const LinksWidget = ({ widget, updateWidget, isMobileMode }) => {
             </div>
           </div>
         ))}
-        {links.length === 0 && (
-          <div className="text-xs text-center text-stone-600 mt-4 italic">Nenhum link salvo.</div>
-        )}
       </div>
     </div>
   );
@@ -347,9 +297,10 @@ const TableWidget = ({ widget, updateWidget }) => {
   const [showToolbar, setShowToolbar] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
+  // Safe defaults if missing
   const rows = widget.rows || [['', ''], ['', '']];
-  const colWidths = widget.colWidths || [120, 120];
-  const rowHeights = widget.rowHeights || [40, 40];
+  const colWidths = widget.colWidths || Array(rows[0].length).fill(120);
+  const rowHeights = widget.rowHeights || Array(rows.length).fill(40);
 
   const updateCell = (rIdx, cIdx, html) => {
     const newRows = [...rows];
@@ -358,7 +309,7 @@ const TableWidget = ({ widget, updateWidget }) => {
   };
 
   const addRow = () => updateWidget(widget.id, { 
-    rows: [...rows, Array(colWidths.length).fill('')],
+    rows: [...rows, Array(rows[0].length).fill('')],
     rowHeights: [...rowHeights, 40]
   });
 
@@ -395,9 +346,7 @@ const TableWidget = ({ widget, updateWidget }) => {
      updateWidget(widget.id, { rowHeights: newHeights });
   };
 
-  const execCmd = (cmd, val = null) => {
-    document.execCommand(cmd, false, val);
-  };
+  const execCmd = (cmd, val = null) => document.execCommand(cmd, false, val);
 
   return (
     <div className="flex flex-col h-full w-full bg-stone-900 rounded overflow-hidden border border-stone-800">
@@ -414,20 +363,13 @@ const TableWidget = ({ widget, updateWidget }) => {
         <div className="flex flex-wrap gap-2 p-1 bg-stone-800 border-b border-stone-700 items-center text-xs shadow-inner">
           <button onPointerDown={(e) => { e.preventDefault(); execCmd('bold'); }} className="p-1.5 bg-stone-700 hover:bg-stone-600 rounded text-stone-200" title="Negrito"><Bold size={14}/></button>
           <button onPointerDown={(e) => { e.preventDefault(); execCmd('italic'); }} className="p-1.5 bg-stone-700 hover:bg-stone-600 rounded text-stone-200" title="Itálico"><Italic size={14}/></button>
-          
           <div className="flex items-center gap-1 bg-stone-900 p-1 rounded border border-stone-700">
             <span className="text-stone-400 px-1 font-bold">Cor:</span>
             <input type="color" onChange={(e) => execCmd('foreColor', e.target.value)} className="w-5 h-5 bg-transparent rounded cursor-pointer" title="Cor do Texto" />
           </div>
           <div className="flex items-center gap-1 bg-stone-900 p-1 rounded border border-stone-700">
             <span className="text-stone-400 px-1 font-bold">Fundo:</span>
-            <input type="color" onChange={(e) => execCmd('backColor', e.target.value)} className="w-5 h-5 bg-transparent rounded cursor-pointer" title="Cor de Fundo da Célula/Texto" />
-          </div>
-          <div className="flex items-center gap-1 bg-stone-900 p-1 rounded border border-stone-700">
-             <span className="text-stone-400 px-1 font-bold">Tam:</span>
-             <button onPointerDown={(e) => { e.preventDefault(); execCmd('fontSize', '2'); }} className="px-1.5 py-0.5 bg-stone-700 hover:bg-stone-600 rounded">P</button>
-             <button onPointerDown={(e) => { e.preventDefault(); execCmd('fontSize', '3'); }} className="px-1.5 py-0.5 bg-stone-700 hover:bg-stone-600 rounded">M</button>
-             <button onPointerDown={(e) => { e.preventDefault(); execCmd('fontSize', '5'); }} className="px-1.5 py-0.5 bg-stone-700 hover:bg-stone-600 rounded">G</button>
+            <input type="color" onChange={(e) => execCmd('backColor', e.target.value)} className="w-5 h-5 bg-transparent rounded cursor-pointer" title="Cor de Fundo" />
           </div>
         </div>
       )}
@@ -448,9 +390,9 @@ const TableWidget = ({ widget, updateWidget }) => {
                    <th key={`col-${i}`} className="border border-stone-700 bg-stone-800 p-1" style={{ width: w }}>
                       <div className="flex flex-col items-center gap-1 text-[10px] font-normal text-stone-400">
                          <div className="flex items-center gap-1 w-full justify-between bg-stone-900 rounded px-1">
-                           <button onClick={() => changeColWidth(i, -20)} className="hover:text-white py-1 px-1.5 bg-stone-700 rounded m-0.5" title="Diminuir Largura">-</button>
+                           <button onClick={() => changeColWidth(i, -20)} className="hover:text-white py-1 px-1.5 bg-stone-700 rounded m-0.5">-</button>
                            <span>{w}px</span>
-                           <button onClick={() => changeColWidth(i, 20)} className="hover:text-white py-1 px-1.5 bg-stone-700 rounded m-0.5" title="Aumentar Largura">+</button>
+                           <button onClick={() => changeColWidth(i, 20)} className="hover:text-white py-1 px-1.5 bg-stone-700 rounded m-0.5">+</button>
                          </div>
                          <button onClick={() => removeCol(i)} className="text-stone-500 hover:text-red-400 flex items-center gap-1 mt-1"><Trash2 size={10}/> Coluna</button>
                       </div>
@@ -467,10 +409,9 @@ const TableWidget = ({ widget, updateWidget }) => {
                       <td key={`cell-${rIdx}-${cIdx}`} className="border border-stone-700 p-0 align-top focus-within:bg-stone-800 transition-colors" style={{ width: colWidths[cIdx], minWidth: colWidths[cIdx], maxWidth: colWidths[cIdx], height: rowHeights[rIdx] || 40 }}>
                          <div 
                            className="w-full h-full p-2 outline-none overflow-y-auto custom-scrollbar"
-                           contentEditable
-                           suppressContentEditableWarning
+                           contentEditable suppressContentEditableWarning
                            onBlur={(e) => updateCell(rIdx, cIdx, e.currentTarget.innerHTML)}
-                           dangerouslySetInnerHTML={{ __html: c }}
+                           dangerouslySetInnerHTML={{ __html: c || '' }}
                            style={{ minHeight: rowHeights[rIdx] || 40 }}
                          />
                       </td>
@@ -479,10 +420,10 @@ const TableWidget = ({ widget, updateWidget }) => {
                      <td className="border border-stone-700 bg-stone-800 p-1 align-middle w-12">
                         <div className="flex flex-col items-center gap-1 text-[10px] text-stone-400 h-full justify-center">
                            <div className="flex flex-col items-center bg-stone-900 rounded w-full gap-0.5 p-0.5">
-                             <button onClick={() => changeRowHeight(rIdx, 20)} className="hover:text-white py-0.5 px-2 bg-stone-700 rounded w-full" title="Aumentar Altura">+</button>
-                             <button onClick={() => changeRowHeight(rIdx, -20)} className="hover:text-white py-0.5 px-2 bg-stone-700 rounded w-full" title="Diminuir Altura">-</button>
+                             <button onClick={() => changeRowHeight(rIdx, 20)} className="hover:text-white py-0.5 bg-stone-700 rounded w-full">+</button>
+                             <button onClick={() => changeRowHeight(rIdx, -20)} className="hover:text-white py-0.5 bg-stone-700 rounded w-full">-</button>
                            </div>
-                           <button onClick={() => removeRow(rIdx)} className="text-stone-500 hover:text-red-400 mt-1" title="Deletar Linha"><Trash2 size={12}/></button>
+                           <button onClick={() => removeRow(rIdx)} className="text-stone-500 hover:text-red-400 mt-1"><Trash2 size={12}/></button>
                         </div>
                      </td>
                    )}
@@ -497,32 +438,34 @@ const TableWidget = ({ widget, updateWidget }) => {
 
 const NoteWidget = ({ widget, updateWidget }) => {
   const [showToolbar, setShowToolbar] = useState(false);
-  const activePage = widget.pages.find(p => p.id === widget.activePageId) || widget.pages[0];
+  // Security fallback if pages array doesn't exist in older saves
+  const pages = widget.pages || [{ id: Date.now() + Math.random(), title: 'Pág 1', content: '' }];
+  const activePage = pages.find(p => p.id === widget.activePageId) || pages[0];
   
   const addPage = () => {
-    const newPage = { id: Date.now(), title: `Pág ${widget.pages.length + 1}`, content: '' };
-    updateWidget(widget.id, { pages: [...widget.pages, newPage], activePageId: newPage.id });
+    const newPage = { id: Date.now() + Math.random(), title: `Pág ${pages.length + 1}`, content: '' };
+    updateWidget(widget.id, { pages: [...pages, newPage], activePageId: newPage.id });
   };
   
   const updatePageTitle = (pageId, newTitle) => {
-    updateWidget(widget.id, { pages: widget.pages.map(p => p.id === pageId ? { ...p, title: newTitle } : p) });
+    updateWidget(widget.id, { pages: pages.map(p => p.id === pageId ? { ...p, title: newTitle } : p) });
   };
 
   return (
     <div className="flex flex-col h-full w-full">
       <div className="flex bg-stone-900 rounded-t-lg border-b border-stone-700 p-1 justify-between items-center gap-1">
         <div className="flex overflow-x-auto custom-scrollbar gap-1 flex-1">
-          {widget.pages.map(page => (
+          {pages.map(page => (
             <div 
               key={page.id} onClick={() => updateWidget(widget.id, { activePageId: page.id })}
               className={`flex items-center gap-1 px-2 py-1 text-sm rounded cursor-pointer group whitespace-nowrap ${widget.activePageId === page.id ? 'bg-stone-700 theme-text' : 'bg-stone-800 text-stone-400 hover:bg-stone-700'}`}
             >
-              <input type="text" value={page.title} onChange={e => updatePageTitle(page.id, e.target.value)} className="bg-transparent outline-none w-20 text-center font-bold" onClick={e => e.stopPropagation()} />
-              {widget.pages.length > 1 && (
+              <input type="text" value={page.title || ''} onChange={e => updatePageTitle(page.id, e.target.value)} className="bg-transparent outline-none w-20 text-center font-bold" onClick={e => e.stopPropagation()} />
+              {pages.length > 1 && (
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
-                    const newPages = widget.pages.filter(p => p.id !== page.id);
+                    const newPages = pages.filter(p => p.id !== page.id);
                     updateWidget(widget.id, { pages: newPages, activePageId: widget.activePageId === page.id ? newPages[0].id : widget.activePageId });
                   }} 
                   className="opacity-0 group-hover:opacity-100 hover:text-red-400 ml-1"
@@ -539,27 +482,39 @@ const NoteWidget = ({ widget, updateWidget }) => {
         </button>
       </div>
       {showToolbar && (
-        <div className="flex gap-2 p-1 bg-stone-800 border-b border-stone-700 flex-wrap">
+        <div className="flex gap-2 p-1 bg-stone-800 border-b border-stone-700 flex-wrap items-center">
           <button onPointerDown={(e) => { e.preventDefault(); document.execCommand('bold', false, null); }} className="p-1 hover:bg-stone-700 rounded text-stone-300"><Bold size={14} /></button>
           <button onPointerDown={(e) => { e.preventDefault(); document.execCommand('italic', false, null); }} className="p-1 hover:bg-stone-700 rounded text-stone-300"><Italic size={14} /></button>
-          <button onPointerDown={(e) => { e.preventDefault(); document.execCommand('formatBlock', false, 'H2'); }} className="p-1 hover:bg-stone-700 rounded text-stone-300"><Heading size={14} /></button>
+          <button onPointerDown={(e) => { e.preventDefault(); document.execCommand('formatBlock', false, 'H2'); }} className="p-1 hover:bg-stone-700 rounded text-stone-300" title="Criar Título"><Heading size={14} /></button>
+          
+          <div className="w-px h-4 bg-stone-600 mx-1"></div>
+          
+          <select 
+            onChange={(e) => { document.execCommand('fontSize', false, e.target.value); e.target.value = "0"; }} 
+            className="bg-stone-900 border border-stone-700 text-stone-300 text-xs rounded px-1 py-0.5 outline-none cursor-pointer"
+            title="Tamanho do Texto Selecionado"
+          >
+            <option value="0">Tamanho...</option>
+            <option value="1">Micro</option>
+            <option value="2">Pequeno</option>
+            <option value="3">Normal</option>
+            <option value="4">Grande</option>
+            <option value="5">Enorme</option>
+            <option value="6">Gigante</option>
+            <option value="7">Titânico</option>
+          </select>
+
           <div className="flex items-center gap-1 bg-stone-900 p-1 rounded border border-stone-700">
             <span className="text-stone-400 px-1 font-bold text-xs">Cor:</span>
-            <input type="color" onChange={(e) => document.execCommand('foreColor', false, e.target.value)} className="w-5 h-5 bg-transparent rounded cursor-pointer" title="Cor do Texto" />
-          </div>
-          <div className="flex items-center gap-1 bg-stone-900 p-1 rounded border border-stone-700">
-             <span className="text-stone-400 px-1 font-bold text-xs">Tam:</span>
-             <button onPointerDown={(e) => { e.preventDefault(); document.execCommand('fontSize', false, '2'); }} className="px-1.5 py-0.5 bg-stone-700 hover:bg-stone-600 rounded text-xs">P</button>
-             <button onPointerDown={(e) => { e.preventDefault(); document.execCommand('fontSize', false, '3'); }} className="px-1.5 py-0.5 bg-stone-700 hover:bg-stone-600 rounded text-xs">M</button>
-             <button onPointerDown={(e) => { e.preventDefault(); document.execCommand('fontSize', false, '5'); }} className="px-1.5 py-0.5 bg-stone-700 hover:bg-stone-600 rounded text-xs">G</button>
+            <input type="color" onChange={(e) => document.execCommand('foreColor', false, e.target.value)} className="w-5 h-5 bg-transparent rounded cursor-pointer" title="Cor do Texto Selecionado" />
           </div>
         </div>
       )}
       <div 
         className="flex-1 w-full bg-stone-900 p-3 rounded-b-lg text-sm text-stone-200 outline-none overflow-y-auto"
         contentEditable suppressContentEditableWarning
-        onBlur={(e) => updateWidget(widget.id, { pages: widget.pages.map(p => p.id === activePage.id ? { ...p, content: e.currentTarget.innerHTML } : p) })}
-        dangerouslySetInnerHTML={{ __html: activePage.content }}
+        onBlur={(e) => updateWidget(widget.id, { pages: pages.map(p => p.id === activePage.id ? { ...p, content: e.currentTarget.innerHTML } : p) })}
+        dangerouslySetInnerHTML={{ __html: activePage.content || '' }}
       />
     </div>
   );
@@ -586,7 +541,7 @@ const ImageWidget = ({ widget, updateWidget }) => {
         <div className="flex items-center p-1 bg-stone-900 border-b border-stone-800 text-xs gap-1 flex-wrap">
           <div className="flex flex-1 gap-1 min-w-[150px]">
             <input type="text" value={widget.imageUrlInput || ''} onChange={(e)=> updateWidget(widget.id, {imageUrlInput: e.target.value})} placeholder="URL da imagem..." className="flex-1 bg-stone-950 border border-stone-700 px-2 rounded outline-none placeholder-stone-600 focus:border-[var(--theme-main)]"/>
-            <button onClick={()=> updateWidget(widget.id, {imageData: widget.imageUrlInput})} className="px-3 py-1 bg-stone-700 hover:bg-stone-600 rounded text-stone-200 font-bold" title="Carregar URL">OK</button>
+            <button onClick={()=> updateWidget(widget.id, {imageData: widget.imageUrlInput})} className="px-3 py-1 bg-stone-700 hover:bg-stone-600 rounded text-stone-200 font-bold">OK</button>
           </div>
           <label className="px-3 py-1 bg-stone-700 hover:bg-stone-600 rounded cursor-pointer flex items-center gap-1 font-bold text-stone-200">
             <FolderOpen size={12} /> Local
@@ -624,15 +579,10 @@ const App = () => {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   
   const [appSettings, setAppSettings] = useState({ 
-    theme: 'amber', 
-    bgType: 'none', 
-    bgValue: '#1c1917', 
-    opacity: 30, 
-    fontSize: 16 
+    theme: 'amber', bgType: 'none', bgValue: '#1c1917', opacity: 30, fontSize: 16 
   });
   
   const [isMobileMode, setIsMobileMode] = useState(false);
-  
   const [templateName, setTemplateName] = useState('');
   const [templatePassword, setTemplatePassword] = useState('');
   const [templateImage, setTemplateImage] = useState(null);
@@ -642,12 +592,16 @@ const App = () => {
   const UNIVERSAL_PASS = "71996813993";
 
   useEffect(() => {
-    const saved = localStorage.getItem('dmscreen_layout');
-    if (saved) setWidgets(JSON.parse(saved));
-    const savedTemplates = localStorage.getItem('dmscreen_templates');
-    if (savedTemplates) setTemplates(JSON.parse(savedTemplates));
-    const savedSettings = localStorage.getItem('dmscreen_settings');
-    if (savedSettings) setAppSettings(JSON.parse(savedSettings));
+    try {
+      const saved = localStorage.getItem('dmscreen_layout');
+      if (saved) setWidgets(JSON.parse(saved));
+      const savedTemplates = localStorage.getItem('dmscreen_templates');
+      if (savedTemplates) setTemplates(JSON.parse(savedTemplates));
+      const savedSettings = localStorage.getItem('dmscreen_settings');
+      if (savedSettings) setAppSettings(JSON.parse(savedSettings));
+    } catch (e) {
+      console.warn("Could not load previous settings from cache.", e);
+    }
 
     const checkMobile = () => setIsMobileMode(window.innerWidth < 768);
     window.addEventListener('resize', checkMobile);
@@ -662,14 +616,14 @@ const App = () => {
   const addWidget = (type) => {
     const offset = (widgets.length % 5) * 40;
     const newWidget = { 
-      id: Date.now(), type, title: type.charAt(0).toUpperCase() + type.slice(1),
+      id: Date.now() + Math.random(), type, title: type.charAt(0).toUpperCase() + type.slice(1),
       x: 50 + offset, y: 50 + offset, zIndex: topZ + 1,
       width: 350, height: 300, isLocked: false
     };
     
     if (type === 'note') {
       newWidget.title = 'Anotações';
-      newWidget.pages = [{ id: Date.now() + 1, title: 'Nova Página', content: '' }];
+      newWidget.pages = [{ id: Date.now() + Math.random(), title: 'Nova Página', content: '' }];
       newWidget.activePageId = newWidget.pages[0].id;
     } else if (type === 'dice') {
       newWidget.title = 'Rolador de Dados';
@@ -702,17 +656,14 @@ const App = () => {
       setModalMessage({ type: 'error', text: 'Digite um nome para o modelo.' });
       return;
     }
-    
     try {
       let updatedTemplates = [...templates];
-      
       if (existingId) {
         const existing = updatedTemplates.find(t => t.id === existingId);
         if (existing.password && existing.password !== UNIVERSAL_PASS) {
           const pass = prompt("Este modelo está protegido. Digite a senha para sobrescrever:");
           if (pass !== existing.password && pass !== UNIVERSAL_PASS) {
-            alert("Senha Incorreta!");
-            return;
+            alert("Senha Incorreta!"); return;
           }
         }
         existing.widgets = widgets;
@@ -720,24 +671,19 @@ const App = () => {
         existing.date = new Date().toLocaleDateString();
       } else {
         const newTemplate = {
-          id: Date.now(),
-          name: templateName,
-          password: templatePassword,
-          image: templateImage,
-          widgets: widgets,
-          topZ: topZ,
-          date: new Date().toLocaleDateString()
+          id: Date.now() + Math.random(),
+          name: templateName, password: templatePassword, image: templateImage,
+          widgets: widgets, topZ: topZ, date: new Date().toLocaleDateString()
         };
         updatedTemplates.push(newTemplate);
       }
-      
       localStorage.setItem('dmscreen_templates', JSON.stringify(updatedTemplates));
       setTemplates(updatedTemplates);
       setModalMessage({ type: 'success', text: 'Modelo salvo com sucesso!' });
       setTimeout(() => setModalMessage({ type: '', text: '' }), 3000);
       setTemplateName(''); setTemplatePassword(''); setTemplateImage(null);
     } catch (error) {
-      setModalMessage({ type: 'error', text: 'Erro ao salvar. Verifique se imagens não ultrapassam o limite do navegador.' });
+      setModalMessage({ type: 'error', text: 'Erro ao salvar. Pode ser que imagens estejam acima do limite do navegador.' });
     }
   };
 
@@ -747,12 +693,11 @@ const App = () => {
       if (template.password && template.password !== UNIVERSAL_PASS) {
         const pass = prompt("Este modelo requer senha:");
         if (pass !== template.password && pass !== UNIVERSAL_PASS) {
-          alert("Senha incorreta!");
-          return;
+          alert("Senha incorreta!"); return;
         }
       }
-      setWidgets(template.widgets);
-      setTopZ(template.topZ);
+      setWidgets(template.widgets || []);
+      setTopZ(template.topZ || 10);
       setShowTemplateModal(false);
     }
   };
@@ -762,8 +707,7 @@ const App = () => {
     if (template.password && template.password !== UNIVERSAL_PASS) {
       const pass = prompt("Este modelo requer senha para ser deletado:");
       if (pass !== template.password && pass !== UNIVERSAL_PASS) {
-        alert("Senha incorreta!");
-        return;
+        alert("Senha incorreta!"); return;
       }
     }
     const updatedTemplates = templates.filter(t => t.id !== id);
@@ -777,8 +721,7 @@ const App = () => {
     downloadAnchorNode.setAttribute("href", dataStr);
     downloadAnchorNode.setAttribute("download", `dmscreen_backup.json`);
     document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+    downloadAnchorNode.click(); downloadAnchorNode.remove();
   };
 
   const importTemplates = (e) => {
@@ -794,9 +737,7 @@ const App = () => {
           setTemplates(merged);
           alert('Modelos importados com sucesso!');
         }
-      } catch (err) {
-        alert('Arquivo inválido.');
-      }
+      } catch (err) { alert('Arquivo inválido.'); }
     };
     reader.readAsText(file);
   };
@@ -815,7 +756,7 @@ const App = () => {
     return (
       <div className="flex flex-col items-center h-full gap-2 relative">
         <div className="text-5xl font-black theme-text bg-stone-950 w-full text-center py-4 rounded border border-stone-700 flex-1 flex items-center justify-center shadow-inner">
-          {widget.result}
+          {widget.result || '---'}
         </div>
         
         <div className="flex gap-2 w-full justify-center bg-stone-800 p-2 rounded border border-stone-700">
@@ -842,12 +783,16 @@ const App = () => {
     );
   };
 
+  const currentTheme = THEMES[appSettings.theme] || THEMES.amber;
+  const fontSize = appSettings.fontSize || 16;
+  const bgOpacity = appSettings.opacity || 30;
+
   return (
-    <div className="fixed inset-0 flex flex-col overflow-hidden text-stone-100 font-sans w-full h-full m-0 p-0" style={{ '--theme-main': THEMES[appSettings.theme].main, backgroundColor: THEMES[appSettings.theme].bg }}>
+    <div className="fixed inset-0 flex flex-col overflow-hidden text-stone-100 font-sans w-full h-full m-0 p-0" style={{ '--theme-main': currentTheme.main, backgroundColor: currentTheme.bg }}>
       
-      {appSettings.bgType === 'image' && <div className="absolute inset-0 z-0 bg-cover bg-center" style={{ backgroundImage: `url(${appSettings.bgValue})`, opacity: appSettings.opacity / 100 }} />}
+      {appSettings.bgType === 'image' && <div className="absolute inset-0 z-0 bg-cover bg-center" style={{ backgroundImage: `url(${appSettings.bgValue})`, opacity: bgOpacity / 100 }} />}
       {appSettings.bgType === 'video' && (
-        <video autoPlay loop muted className="absolute inset-0 z-0 w-full h-full object-cover" style={{ opacity: appSettings.opacity / 100 }}>
+        <video autoPlay loop muted className="absolute inset-0 z-0 w-full h-full object-cover" style={{ opacity: bgOpacity / 100 }}>
           <source src={appSettings.bgValue} type="video/mp4" />
         </video>
       )}
@@ -866,9 +811,9 @@ const App = () => {
         
         <div className="flex gap-2 items-center">
           <div className="flex items-center gap-1 bg-stone-900 rounded border border-stone-700 p-0.5">
-            <button onClick={() => setAppSettings({...appSettings, fontSize: Math.max(12, (appSettings.fontSize || 16) - 1)})} className="p-1.5 text-stone-400 hover:text-white transition-colors" title="Diminuir Fonte"><Minus size={14} /></button>
+            <button onClick={() => setAppSettings({...appSettings, fontSize: Math.max(12, fontSize - 1)})} className="p-1.5 text-stone-400 hover:text-white transition-colors" title="Diminuir Fonte"><Minus size={14} /></button>
             <Type size={14} className="text-stone-500" />
-            <button onClick={() => setAppSettings({...appSettings, fontSize: Math.min(24, (appSettings.fontSize || 16) + 1)})} className="p-1.5 text-stone-400 hover:text-white transition-colors" title="Aumentar Fonte"><Plus size={14} /></button>
+            <button onClick={() => setAppSettings({...appSettings, fontSize: Math.min(24, fontSize + 1)})} className="p-1.5 text-stone-400 hover:text-white transition-colors" title="Aumentar Fonte"><Plus size={14} /></button>
           </div>
 
           <button onClick={() => setIsMobileMode(!isMobileMode)} className={`p-2 rounded border transition-colors ${isMobileMode ? 'bg-[var(--theme-main)] border-[var(--theme-main)] text-stone-900' : 'bg-stone-800 border-stone-700 text-stone-400'}`} title="Modo Mobile">
@@ -878,7 +823,7 @@ const App = () => {
             <Settings size={16} />
           </button>
           <button onClick={() => setShowTemplateModal(true)} className="bg-stone-800 hover:bg-stone-700 text-stone-200 transition-colors px-3 py-1.5 rounded flex items-center gap-2 border border-stone-600 text-xs font-bold">
-            <FolderOpen size={14} className="theme-text" /> <span className="hidden md:inline">Salvar Layout</span>
+            <FolderOpen size={14} className="theme-text" /> <span className="hidden md:inline">Layouts</span>
           </button>
         </div>
       </header>
@@ -896,7 +841,7 @@ const App = () => {
         ))}
       </main>
 
-      <footer className="flex items-center gap-2 bg-stone-950 border-t border-stone-700 px-2 py-1 overflow-x-auto z-50 flex-shrink-0">
+      <footer className="flex items-center gap-2 bg-stone-950 border-t border-stone-700 px-2 py-1 overflow-x-auto z-50 flex-shrink-0 custom-scrollbar">
         <div className="text-[10px] font-bold text-stone-500 uppercase px-2">Janelas: {widgets.length}</div>
         {widgets.map(w => (
           <button key={`task-${w.id}`} onClick={() => bringToFront(w.id)} className="px-3 py-1 bg-stone-800 hover:bg-stone-700 rounded text-xs font-bold border border-stone-700 truncate max-w-[120px] transition-colors theme-text">
@@ -907,7 +852,7 @@ const App = () => {
 
       {showSettingsModal && (
         <div className="absolute inset-0 z-[100] flex items-center justify-center bg-black/80 p-4">
-          <div className="bg-stone-900 border border-stone-600 rounded-lg shadow-2xl w-full max-w-sm p-4 flex flex-col gap-3">
+          <div className="bg-stone-900 border border-stone-600 rounded-lg shadow-2xl w-full max-w-sm p-4 flex flex-col gap-3 max-h-[90vh]">
             <div className="flex justify-between items-center border-b border-stone-700 pb-2">
               <h2 className="text-sm font-bold theme-text flex items-center gap-2"><Settings size={16}/> Configurações</h2>
               <button onClick={() => { setShowSettingsModal(false); localStorage.setItem('dmscreen_settings', JSON.stringify(appSettings)); }} className="text-red-400"><X size={16}/></button>
@@ -927,7 +872,7 @@ const App = () => {
                 Fundo de Tela
                 <div className="flex items-center gap-2 text-stone-200">
                   <span className="text-[9px]">Opacidade</span>
-                  <input type="range" min="10" max="100" value={appSettings.opacity} onChange={e => setAppSettings({...appSettings, opacity: e.target.value})} className="w-16"/>
+                  <input type="range" min="10" max="100" value={bgOpacity} onChange={e => setAppSettings({...appSettings, opacity: e.target.value})} className="w-16"/>
                 </div>
               </label>
               <select value={appSettings.bgType} onChange={e => setAppSettings({...appSettings, bgType: e.target.value})} className="bg-stone-950 border border-stone-700 rounded p-1.5 text-xs text-stone-200 outline-none">
@@ -936,34 +881,37 @@ const App = () => {
                 <option value="video">Vídeo / GIF (URL)</option>
               </select>
               {appSettings.bgType !== 'none' && (
-                <input type="text" value={appSettings.bgType !== 'none' ? appSettings.bgValue : ''} onChange={e => setAppSettings({...appSettings, bgValue: e.target.value})} placeholder="URL do arquivo..." className="bg-stone-950 border border-stone-700 rounded p-1.5 text-xs outline-none w-full" />
+                <input type="text" value={appSettings.bgValue || ''} onChange={e => setAppSettings({...appSettings, bgValue: e.target.value})} placeholder="URL do arquivo..." className="bg-stone-950 border border-stone-700 rounded p-1.5 text-xs outline-none w-full" />
               )}
             </div>
 
             <div className="w-full h-px bg-stone-700 my-1"></div>
             
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 overflow-hidden">
               <h3 className="text-xs font-bold theme-text">Sobre o DM Screen</h3>
-              <div className="bg-stone-950 border border-stone-700 p-2 rounded text-[10px] text-stone-400 flex flex-col gap-1 max-h-48 overflow-y-auto custom-scrollbar">
+              <div className="bg-stone-950 border border-stone-700 p-2 rounded text-[10px] text-stone-400 flex flex-col gap-1 max-h-32 overflow-y-auto custom-scrollbar">
                 <div className="border-b border-stone-800 pb-1 mb-1">
-                  <strong className="text-stone-200">DM lite Alpha 0.2.1v</strong>
+                  <strong className="text-stone-200">DM lite Alpha 0.2.3v</strong>
                 </div>
-                <p className="italic leading-relaxed mb-1">Recursos desta versão:</p>
+                <p className="italic leading-relaxed mb-1">Primeira versão aberta definitiva. Funções básicas de escudo:</p>
                 <ul className="list-disc list-inside leading-relaxed text-stone-300 space-y-0.5">
-                  <li>Anotações com formatação</li>
-                  <li>Rolagem de Dados avançada</li>
-                  <li>Iniciativa Tracker</li>
-                  <li>Anexo e organização de links</li>
-                  <li>Zoom de imagens (URL/Local)</li>
-                  <li>Tabelas personalizáveis</li>
-                  <li>Modo Mobile e temas</li>
-                  <li>Configuração de fundos animados</li>
+                  <li>Anotações flexíveis com formatação</li>
+                  <li>Dados (modificadores, qtde e histórico)</li>
+                  <li>Iniciativa Tracker de combate</li>
+                  <li>Anexo de links para fácil acesso</li>
+                  <li>Importação de imagens com Zoom</li>
+                  <li>Tabela/planilhas formatáveis</li>
+                  <li>Suporte básico para mobile (trava e redimensionamento)</li>
+                  <li>Ajuste dinâmico de fontes globais</li>
+                  <li>Customização básica do escudo (temas e fundos)</li>
+                  <li>Sistema de janelas com Lock ON/OFF</li>
+                  <li>Correção de bugs e estabilidade de cache</li>
                 </ul>
                 <div className="mt-2 pt-1 border-t border-stone-800 flex flex-col gap-0.5">
                   <span>Criado por Dev <strong className="text-stone-200">Nicck Queijo</strong></span>
-                  <div className="flex flex-col gap-0.5">
-                    <span>📱 Telegram: <strong className="text-stone-200">@ralseibaiano</strong></span>
-                    <span>🎮 Discord: <strong className="text-stone-200">inabakaoru</strong></span>
+                  <div className="flex flex-col gap-0.5 mt-1">
+                    <span className="flex items-center gap-1">📱 Telegram: <strong className="text-stone-200">@ralseibaiano</strong></span>
+                    <span className="flex items-center gap-1">🎮 Discord: <strong className="text-stone-200">inabakaoru</strong></span>
                   </div>
                 </div>
               </div>
@@ -980,7 +928,7 @@ const App = () => {
               <button onClick={() => setShowTemplateModal(false)} className="text-stone-400 hover:text-red-400"><X size={20} /></button>
             </div>
             
-            <div className="p-4 flex flex-col gap-4 overflow-y-auto">
+            <div className="p-4 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
               <div className="flex flex-col gap-2 bg-stone-950 p-3 rounded border border-stone-700">
                 <label className="text-xs font-bold text-stone-400 uppercase">Salvar Novo Modelo</label>
                 <div className="flex gap-2 items-center">
@@ -1021,19 +969,19 @@ const App = () => {
               </div>
 
               <div className="flex flex-col gap-2">
-                {templates.filter(t => t.name.toLowerCase().includes(search.toLowerCase())).map(t => (
+                {templates.filter(t => (t.name || '').toLowerCase().includes(search.toLowerCase())).map(t => (
                   <div key={t.id} className="flex items-center justify-between bg-stone-800 border border-stone-700 p-2 rounded group">
                     <div className="flex items-center gap-3 overflow-hidden">
                       {t.image ? <img src={t.image} className="w-10 h-10 rounded object-cover flex-shrink-0" alt="" /> : <div className="w-10 h-10 rounded bg-stone-900 flex items-center justify-center flex-shrink-0"><Layout size={16} className="text-stone-600"/></div>}
                       <div className="flex flex-col">
                         <span className="font-bold text-sm text-stone-200 flex items-center gap-1">
-                          {t.name} {t.password && <Lock size={12} className="text-amber-500"/>}
+                          {t.name} {t.password && <Lock size={12} className="text-[var(--theme-main)]"/>}
                         </span>
-                        <span className="text-[10px] text-stone-500">{t.date} • {t.widgets.length} janelas</span>
+                        <span className="text-[10px] text-stone-500">{t.date} • {(t.widgets || []).length} janelas</span>
                       </div>
                     </div>
                     <div className="flex gap-1 flex-shrink-0">
-                      <button onClick={() => saveTemplate(t.id)} className="p-2 text-stone-400 hover:text-blue-400 hover:bg-stone-700 rounded transition-colors" title="Sobrescrever (Atualizar)">
+                      <button onClick={() => saveTemplate(t.id)} className="p-2 text-stone-400 hover:text-blue-400 hover:bg-stone-700 rounded transition-colors" title="Atualizar (Sobrescrever)">
                         <RefreshCw size={14} />
                       </button>
                       <button onClick={() => loadTemplate(t.id)} className="px-3 py-1.5 bg-stone-700 hover:bg-[var(--theme-main)] hover:text-stone-900 text-stone-200 rounded text-xs font-bold transition-colors">
@@ -1052,10 +1000,10 @@ const App = () => {
       )}
       
       <style dangerouslySetInnerHTML={{__html: `
-        html { font-size: ${appSettings.fontSize || 16}px !important; }
+        html { font-size: ${fontSize}px !important; }
         .theme-text { color: var(--theme-main); }
         .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #1c1917; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #44403c; border-radius: 3px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--theme-main); }
       `}} />
